@@ -1,45 +1,27 @@
 <!doctype html>
 <!--
-  Social preview card (1200×630): the hero's mid-century shapes over a title.
+  Social preview card (1200×630): the hero's mid-century shapes, full bleed,
+  no text (link previews already show the title and domain).
   Rendered to PNG by render.sh; not deployed.
-  Params: ?title=…&kicker=…
+  Params: ?hue=0–3 (reassign the palette) &mirror=1 (flip left to right)
 -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=JetBrains+Mono:wght@400;500&display=block">
   <style>
-    :root {
-      --bg: #0b0b0d; --fg: #fdfdf9; --fg-2: rgba(253,253,249,.74); --fg-3: rgba(253,253,249,.5);
-      --terracotta: #d4503c; --mustard: #e2a834; --sage: #8f9d73; --teal: #4fb3a9;
-    }
-    * { margin: 0; box-sizing: border-box; }
-    html, body { width: 1200px; height: 630px; overflow: hidden; background: var(--bg); color: var(--fg); }
-    body { position: relative; font-family: Archivo, sans-serif; -webkit-font-smoothing: antialiased; }
-    svg { position: absolute; inset: 0; }
-    .text { position: absolute; left: 60px; right: 60px; bottom: 50px; }
-    .title {
-      font-weight: 820; font-variation-settings: "wdth" var(--wdth, 100);
-      text-transform: uppercase; line-height: .8; letter-spacing: -.035em; margin-left: -.04em;
-    }
-    .title span { display: block; width: max-content; white-space: nowrap; }
-    .meta { display: flex; justify-content: space-between; align-items: baseline; margin-top: 30px; }
-    .kicker { font-size: 34px; font-weight: 500; color: var(--fg-2); }
-    .site { font-family: 'JetBrains Mono', monospace; font-size: 24px; color: var(--fg-3); }
+    :root { --bg: #0b0b0d; --fg: #fdfdf9; --terracotta: #d4503c; --mustard: #e2a834; --sage: #8f9d73; --teal: #4fb3a9; }
+    * { margin: 0; }
+    html, body { width: 1200px; height: 630px; overflow: hidden; background: var(--bg); }
+    svg { display: block; }
   </style>
 </head>
 <body>
-  <svg id="shapes" viewBox="0 0 1200 630" aria-hidden="true"></svg>
-  <div class="text">
-    <h1 class="title" id="title"></h1>
-    <div class="meta"><span class="kicker" id="kicker"></span><span class="site">moen.ai</span></div>
-  </div>
+  <svg id="shapes" width="1200" height="630" viewBox="0 0 1200 630" aria-hidden="true"></svg>
 
   <script>
     const params = new URLSearchParams(location.search);
-    const W = 1200, MAX_W = W - 120;
-    const titleEl = document.getElementById('title');
-    document.getElementById('kicker').textContent = params.get('kicker') || 'Professional Maker';
+    const hue = Number(params.get('hue')) || 0;
+    const mirror = params.get('mirror') === '1';
 
     // Same curve and shapes as the hero (js/main.js), frozen at t = 0.
     const smoothPath = (pts) => {
@@ -53,31 +35,37 @@
       }
       return `${d}Z`;
     };
-    const C = { t: 'var(--terracotta)', m: 'var(--mustard)', s: 'var(--sage)', g: 'var(--teal)', k: 'var(--fg)' };
+
+    // Fills rotate through the palette by `hue`; the ring stays white.
+    const FILLS = ['var(--terracotta)', 'var(--mustard)', 'var(--sage)', 'var(--teal)'];
+    const fill = (i) => FILLS[(i + hue) % FILLS.length];
+    // x, y, r in card pixels; `c` indexes FILLS. Edge shapes run off the card.
     const SHAPES = [
-      { kind: 'sun', fx: 0.02, fy: 0.5, r: 0.4, color: C.t },
-      { kind: 'kidney', fx: 0.24, fy: 0.5, r: 0.24, color: C.s, rot: 12 },
-      { kind: 'half', fx: 0.5, fy: -0.1, r: 0.46, color: C.m, rot: 180 },
-      { kind: 'pebble', fx: 0.63, fy: 0.64, r: 0.15, color: C.g },
-      { kind: 'burst', fx: 0.74, fy: 0.3, r: 0.2, color: C.s },
-      { kind: 'pebble', fx: 0.86, fy: 0.6, r: 0.24, color: C.t },
-      { kind: 'ring', fx: 0.985, fy: 0.12, r: 0.28, color: C.k },
+      { kind: 'sun', x: 60, y: 560, r: 250, c: 0 },
+      { kind: 'kidney', x: 470, y: 440, r: 100, c: 2, rot: 12 },
+      { kind: 'half', x: 560, y: 0, r: 230, c: 1, rot: 180 },
+      { kind: 'pebble', x: 205, y: 120, r: 58, c: 3 },
+      { kind: 'pebble', x: 800, y: 330, r: 66, c: 3 },
+      { kind: 'burst', x: 960, y: 150, r: 92, c: 2 },
+      { kind: 'pebble', x: 1070, y: 500, r: 125, c: 0 },
+      { kind: 'ring', x: 1165, y: 20, r: 150 },
     ];
     const WAVES = [[2, 0.055], [3, 0.035], [4, 0.015]];
 
-    function shapeSVG(spec, R, seed) {
+    function shapeSVG(spec, color, seed) {
+      const R = spec.r;
       switch (spec.kind) {
-        case 'sun': return `<circle r="${R}" fill="${spec.color}"/>`;
-        case 'half': return `<path d="M${-R},0A${R},${R} 0 0 1 ${R},0Z" fill="${spec.color}"/>`;
-        case 'ring': return `<circle r="${R * 0.97}" fill="none" stroke="${spec.color}" stroke-width="2"/>`;
+        case 'sun': return `<circle r="${R}" fill="${color}"/>`;
+        case 'half': return `<path d="M${-R},0A${R},${R} 0 0 1 ${R},0Z" fill="${color}"/>`;
+        case 'ring': return `<circle r="${R * 0.97}" fill="none" stroke="var(--fg)" stroke-width="3"/>`;
         case 'burst': {
           let d = '';
           for (let i = 0; i < 16; i++) {
             const a = (i / 16) * Math.PI * 2, r0 = R * 0.28, r1 = i % 2 ? R * 0.72 : R;
             d += `M${(Math.cos(a) * r0).toFixed(1)},${(Math.sin(a) * r0).toFixed(1)}L${(Math.cos(a) * r1).toFixed(1)},${(Math.sin(a) * r1).toFixed(1)}`;
           }
-          return `<path d="${d}" fill="none" stroke="${spec.color}" stroke-width="${Math.max(2, R * 0.05)}" stroke-linecap="round"/>` +
-            `<circle r="${R * 0.14}" fill="${spec.color}"/>`;
+          return `<path d="${d}" fill="none" stroke="${color}" stroke-width="${R * 0.05}" stroke-linecap="round"/>` +
+            `<circle r="${R * 0.14}" fill="${color}"/>`;
         }
         default: { // pebble, kidney
           const stretch = spec.kind === 'kidney' ? 1.45 : 1;
@@ -89,47 +77,18 @@
             if (spec.kind === 'kidney') r -= 0.12 * Math.max(0, Math.cos(a - Math.PI / 2)) ** 3;
             pts.push([Math.cos(a) * R * r * stretch, Math.sin(a) * R * r]);
           }
-          return `<path d="${smoothPath(pts)}" fill="${spec.color}"/>`;
+          return `<path d="${smoothPath(pts)}" fill="${color}"/>`;
         }
       }
     }
 
-    // Fit the title to the card width: one line when it can be big enough,
-    // otherwise two balanced lines.
-    function setTitle(lines, size) {
-      titleEl.replaceChildren(...lines.map((l) => Object.assign(document.createElement('span'), { textContent: l })));
-      titleEl.style.fontSize = `${size}px`;
-    }
-    const widest = () => Math.max(...[...titleEl.children].map((s) => s.getBoundingClientRect().width));
-    function fit(lines, maxSize) {
-      setTitle(lines, 100);
-      return Math.min(maxSize, (100 * MAX_W) / widest());
-    }
-    function layoutTitle(text) {
-      const one = fit([text], 210);
-      const words = text.split(' ');
-      if (one >= 150 || words.length < 2) return setTitle([text], one);
-      let best = null;
-      for (let i = 1; i < words.length; i++) {
-        const lines = [words.slice(0, i).join(' '), words.slice(i).join(' ')];
-        const size = fit(lines, 170);
-        if (!best || size > best.size) best = { lines, size };
-      }
-      setTitle(best.lines, best.size);
-    }
-
-    document.fonts.load('820 100px Archivo').then(() => document.fonts.ready).then(() => {
-      layoutTitle(params.get('title') || 'Trey Moen');
-      // The shapes fill the band above the title, as on the home page.
-      const H = titleEl.getBoundingClientRect().top - 28;
-      document.getElementById('shapes').innerHTML = SHAPES.map((spec, n) => {
-        const seed = n * 1.93 + 0.4, R = spec.r * H;
-        const x = spec.fx * W, y = Math.min(spec.fy * H, H - R * 1.12);
-        const angle = spec.kind === 'burst' ? seed * 40 : (spec.rot || 0) + (spec.kind === 'half' ? 0 : Math.sin(seed) * 4);
-        return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${angle.toFixed(2)})">${shapeSVG(spec, R, seed)}</g>`;
-      }).join('');
-      document.title = 'ready';
-    });
+    const shapes = SHAPES.map((spec, n) => {
+      const seed = n * 1.93 + 0.4 + hue;
+      const angle = spec.kind === 'burst' ? seed * 40 : (spec.rot || 0) + (spec.kind === 'half' ? 0 : Math.sin(seed) * 4);
+      return `<g transform="translate(${spec.x} ${spec.y}) rotate(${angle.toFixed(2)})">${shapeSVG(spec, fill(spec.c ?? 0), seed)}</g>`;
+    }).join('');
+    document.getElementById('shapes').innerHTML = mirror ? `<g transform="translate(1200 0) scale(-1 1)">${shapes}</g>` : shapes;
+    document.title = 'ready';
   </script>
 </body>
 </html>

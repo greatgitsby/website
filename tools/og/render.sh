@@ -7,15 +7,16 @@ CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 BASE="http://localhost:4173/tools/og/card.html"
 mkdir -p og
 
-card() { # name, title, kicker (URL-encoded)
+card() { # name, query
   "$CHROME" --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1 \
-    --window-size=1200,630 --virtual-time-budget=8000 \
-    --screenshot="og/$1.png" "$BASE?title=$2&kicker=$3" >/dev/null 2>&1
+    --window-size=1200,630 --virtual-time-budget=3000 \
+    --screenshot="og/$1.png" "$BASE?$2" >/dev/null 2>&1
   echo "og/$1.png"
 }
 
-card home     "Trey%20Moen"               "Professional%20Maker"
-card blog     "Blog"                      "Trey%20Moen"
-card vinetech "Senior%20Capstone%20Project" "Blog%20%C2%B7%20Trey%20Moen"
-card articles "Articles"                  "Blog%20%C2%B7%20Trey%20Moen"
-card projects "Projects"                  "Blog%20%C2%B7%20Trey%20Moen"
+# Each page gets its own variation, so links look distinct side by side.
+card home     "hue=0"
+card blog     "hue=0&mirror=1"
+card vinetech "hue=1"
+card articles "hue=2&mirror=1"
+card projects "hue=3"
