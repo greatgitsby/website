@@ -362,8 +362,8 @@
 
   // ------------------------------------------------------- mid-century shapes
   // Simple mid-century forms fill the space above the name: suns, a half-moon
-  // bowl, a starburst, a ring, and soft pebbles and a kidney that wobble like
-  // liquid. Each floats gently, leans away from
+  // bowl, a ring, soft pebbles and a kidney that wobble like liquid, and the
+  // Claude and Codex marks. Each floats gently, leans away from
   // the pointer, boings when clicked or tapped, and can be dragged; let go
   // and it springs home. Shapes near the edges run partly off-screen.
   const shapeLayer = document.querySelector('.blobs');
@@ -379,17 +379,30 @@
         { kind: 'kidney', fx: 0.24, fy: 0.5, r: 0.24, color: C.s, rot: 12 },
         { kind: 'half', fx: 0.5, fy: -0.1, r: 0.46, color: C.m, rot: 180 },
         { kind: 'pebble', fx: 0.63, fy: 0.64, r: 0.15, color: C.g },
-        { kind: 'burst', fx: 0.74, fy: 0.3, r: 0.2, color: C.s },
-        { kind: 'pebble', fx: 0.86, fy: 0.6, r: 0.24, color: C.t },
+        { kind: 'claude', fx: 0.74, fy: 0.3, r: 0.2, color: C.t },
+        { kind: 'pebble', fx: 0.86, fy: 0.6, r: 0.24, color: C.s },
         { kind: 'ring', fx: 0.985, fy: 0.12, r: 0.28, color: C.k },
+        { kind: 'codex', fx: 0.4, fy: 0.72, r: 0.16, color: C.k },
       ],
       narrow: [
         { kind: 'sun', fx: 0.02, fy: 0.55, r: 0.36, color: C.t },
         { kind: 'half', fx: 0.82, fy: -0.1, r: 0.4, color: C.m, rot: 180 },
         { kind: 'pebble', fx: 0.55, fy: 0.45, r: 0.16, color: C.g },
-        { kind: 'burst', fx: 0.9, fy: 0.74, r: 0.14, color: C.s },
+        { kind: 'claude', fx: 0.9, fy: 0.74, r: 0.14, color: C.t },
+        { kind: 'codex', fx: 0.5, fy: 0.82, r: 0.12, color: C.k },
       ],
     };
+
+    // The Claude spark's outline as points on a 24×24 grid (centred on
+    // 12,12), so its rays can stretch and pull back one after another.
+    const SPARK = '4.709,15.955 9.429,13.308 9.509,13.078 9.429,12.95 9.2,12.95 8.41,12.902 5.712,12.829 3.373,12.732 1.107,12.61 .536,12.489 0,11.784 .055,11.432 .535,11.111 1.221,11.171 2.741,11.274 5.019,11.432 6.671,11.529 9.12,11.784 9.509,11.784 9.564,11.627 9.43,11.529 9.327,11.432 6.969,9.836 4.417,8.148 3.081,7.176 2.357,6.685 1.993,6.223 1.835,5.215 2.491,4.493 3.372,4.553 3.597,4.614 4.49,5.3 6.398,6.776 8.889,8.609 9.254,8.913 9.399,8.81 9.418,8.737 9.254,8.463 7.899,6.017 6.453,3.527 5.809,2.495 5.639,1.876 5.535,1.147 6.283,.134 6.696,0 7.692,.134 8.112,.498 8.732,1.912 9.734,4.141 11.289,7.171 11.745,8.069 11.988,8.901 12.079,9.156 12.237,9.156 12.237,9.01 12.365,7.304 12.602,5.209 12.832,2.514 12.912,1.754 13.288,.844 14.035,.352 14.619,.632 15.099,1.317 15.032,1.761 14.746,3.612 14.187,6.515 13.823,8.457 14.035,8.457 14.278,8.215 15.263,6.909 16.915,4.845 17.645,4.025 18.495,3.121 19.042,2.69 20.075,2.69 20.835,3.819 20.495,4.985 19.431,6.332 18.55,7.474 17.286,9.174 16.496,10.534 16.569,10.644 16.757,10.624 19.613,10.018 21.156,9.738 22.997,9.423 23.83,9.811 23.921,10.206 23.593,11.013 21.624,11.499 19.315,11.961 15.876,12.774 15.834,12.804 15.883,12.865 17.432,13.011 18.094,13.047 19.716,13.047 22.736,13.272 23.526,13.794 24,14.432 23.921,14.917 22.706,15.537 21.066,15.148 17.237,14.238 15.925,13.909 15.743,13.909 15.743,14.019 16.836,15.087 18.842,16.897 21.351,19.227 21.478,19.805 21.156,20.26 20.816,20.211 18.611,18.554 17.76,17.807 15.834,16.187 15.706,16.187 15.706,16.357 16.15,17.006 18.495,20.527 18.617,21.607 18.447,21.96 17.839,22.173 17.171,22.051 15.797,20.126 14.382,17.959 13.239,16.016 13.099,16.096 12.425,23.35 12.109,23.72 11.38,24 10.773,23.539 10.451,22.792 10.773,21.316 11.162,19.392 11.477,17.862 11.763,15.962 11.933,15.33 11.921,15.288 11.781,15.306 10.347,17.273 8.167,20.218 6.441,22.063 6.027,22.227 5.31,21.857 5.377,21.195 5.778,20.606 8.166,17.57 9.606,15.688 10.536,14.602 10.53,14.444 10.475,14.444 4.132,18.56 3.002,18.706 2.515,18.25 2.576,17.504 2.807,17.261 4.715,15.949 4.709,15.955'.split(' ').map((p) => p.split(',').map(Number));
+    // The Claude spark and the Codex cloud, as 24×24 artwork centred on
+    // 12,12. The Codex cursor is kept apart so it can blink.
+    const LOGO = {
+      claude: `M${SPARK.join('L')}Z`,
+      codex: 'M8.086.457a6.105 6.105 0 013.046-.415c1.333.153 2.521.72 3.564 1.7a.117.117 0 00.107.029c1.408-.346 2.762-.224 4.061.366l.063.03.154.076c1.357.703 2.33 1.77 2.918 3.198.278.679.418 1.388.421 2.126a5.655 5.655 0 01-.18 1.631.167.167 0 00.04.155 5.982 5.982 0 011.578 2.891c.385 1.901-.01 3.615-1.183 5.14l-.182.22a6.063 6.063 0 01-2.934 1.851.162.162 0 00-.108.102c-.255.736-.511 1.364-.987 1.992-1.199 1.582-2.962 2.462-4.948 2.451-1.583-.008-2.986-.587-4.21-1.736a.145.145 0 00-.14-.032c-.518.167-1.04.191-1.604.185a5.924 5.924 0 01-2.595-.622 6.058 6.058 0 01-2.146-1.781c-.203-.269-.404-.522-.551-.821a7.74 7.74 0 01-.495-1.283 6.11 6.11 0 01-.017-3.064.166.166 0 00.008-.074.115.115 0 00-.037-.064 5.958 5.958 0 01-1.38-2.202 5.196 5.196 0 01-.333-1.589 6.915 6.915 0 01.188-2.132c.45-1.484 1.309-2.648 2.577-3.493.282-.188.55-.334.802-.438.286-.12.573-.22.861-.304a.129.129 0 00.087-.087A6.016 6.016 0 015.635 2.31C6.315 1.464 7.132.846 8.086.457zm-.804 7.85a.848.848 0 00-1.473.842l1.694 2.965-1.688 2.848a.849.849 0 001.46.864l1.94-3.272a.849.849 0 00.007-.854l-1.94-3.393z',
+    };
+    const CURSOR = 'M12.728 14.547a.849.849 0 000 1.695h4.848a.849.849 0 000-1.696h-4.848z';
 
     const el = (tag, attrs) => {
       const node = document.createElementNS(NS, tag);
@@ -411,14 +424,11 @@
         case 'half': // a dome; rotate 180 for a bowl hanging from the top
           add(setStyle(el('path', { d: `M${-R},0A${R},${R} 0 0 1 ${R},0Z` }), { fill: spec.color }));
           break;
-        case 'burst': {
-          let d = '';
-          for (let i = 0; i < 16; i++) {
-            const a = (i / 16) * Math.PI * 2, r0 = R * 0.28, r1 = i % 2 ? R * 0.72 : R;
-            d += `M${(Math.cos(a) * r0).toFixed(1)},${(Math.sin(a) * r0).toFixed(1)}L${(Math.cos(a) * r1).toFixed(1)},${(Math.sin(a) * r1).toFixed(1)}`;
-          }
-          add(setStyle(el('path', { d }), { fill: 'none', stroke: spec.color, strokeWidth: Math.max(2, R * 0.05), strokeLinecap: 'round' }));
-          add(setStyle(el('circle', { r: R * 0.14 }), { fill: spec.color }));
+        case 'claude':
+        case 'codex': {
+          const logo = add(setStyle(el('path', { d: LOGO[spec.kind], transform: `scale(${(R / 12).toFixed(3)}) translate(-12 -12)` }),
+            { fill: spec.color, fillRule: 'evenodd' }));
+          if (spec.kind === 'codex' || !reduceMotion) live = logo; // the cursor blinks; the spark's rays pulse
           break;
         }
         case 'ring':
@@ -437,7 +447,7 @@
       group.classList.add('shape');
       svg.append(group);
       return { group, seed: n * 1.93 + 0.4, spec: null, live: null, R: 0, hx: 0, hy: 0, px: NaN, py: 0, vx: 0, vy: 0,
-        scale: 1, vs: 0, dent: 0, dentAt: 0, grab: null, shown: false };
+        scale: 1, vs: 0, turn: 0, vt: 0, dent: 0, dentAt: 0, grab: null, shown: false };
     });
 
     let box = hero.getBoundingClientRect();
@@ -495,13 +505,31 @@
       return smoothPath(pts);
     };
 
+    // Like a loading spinner: a soft swell runs clockwise around the spark,
+    // about once a second, over a gentle breathing and rippling of the rays.
+    const spark = (sh, t) => {
+      const breathe = 0.95 + 0.03 * Math.sin(t * 2.2 + sh.seed);
+      let d = '';
+      for (const [x, y] of SPARK) {
+        const dx = x - 12, dy = y - 12, a = Math.atan2(dy, dx);
+        const f = breathe + 0.18 * ((1 + Math.cos(a - t * 6 - sh.seed)) / 2) ** 4
+          + 0.06 * Math.sin(5 * a + t * 3.1) + 0.04 * Math.sin(3 * a - t * 2.3 + sh.seed);
+        d += `${d ? 'L' : 'M'}${(12 + dx * f).toFixed(2)},${(12 + dy * f).toFixed(2)}`;
+      }
+      return `${d}Z`;
+    };
+
     function render(sh, t) {
       const spec = sh.spec;
       // Gentle sway, except for shapes with a flat edge, which stay level.
       const sway = spec.kind === 'half' ? 0 : 4;
       let angle = (spec.rot || 0) + Math.sin(t * 0.4 + sh.seed) * sway;
-      if (spec.kind === 'burst') angle = (t * 6 + sh.seed * 40) % 360; // slow spin
-      if (sh.live) sh.live.setAttribute('d', organic(sh, t));
+      if (spec.kind === 'claude') angle = (sh.turn + sh.seed * 40) % 360;
+      if (sh.live) {
+        sh.live.setAttribute('d', spec.kind === 'claude' ? spark(sh, t)
+          : spec.kind === 'codex' ? (t % 1.06 < 0.53 ? LOGO.codex + CURSOR : LOGO.codex)
+          : organic(sh, t));
+      }
       sh.group.setAttribute('transform', `translate(${sh.px.toFixed(1)} ${sh.py.toFixed(1)}) rotate(${angle.toFixed(2)}) scale(${sh.scale.toFixed(3)})`);
     }
 
@@ -536,6 +564,8 @@
         sh.py += sh.vy;
         sh.vs = (sh.vs + (1 - sh.scale) * 0.16) * 0.84; // boing
         sh.scale += sh.vs;
+        sh.vt += (0.1 - sh.vt) * 0.03; // spin (the Claude spark), easing back to a slow turn
+        sh.turn += sh.vt;
       }
     };
 
@@ -546,6 +576,7 @@
       if (!sh || reduceMotion) return;
       e.preventDefault();
       sh.vs += 0.09;
+      sh.vt += 14; // the Claude spark whirls
       sh.grab = { dx: e.clientX - box.left - sh.px, dy: e.clientY - box.top - sh.py, id: e.pointerId };
       try { group.setPointerCapture(e.pointerId); } catch { /* drag without capture */ }
     });
