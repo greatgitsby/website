@@ -543,8 +543,8 @@
         let ty = sh.hy + Math.cos(t * 0.27 + sh.seed * 1.7) * sh.R * 0.1;
         let dent = 0;
         if (sh.grab) {
-          tx = mx - sh.grab.dx;
-          ty = my - sh.grab.dy;
+          tx = sh.grab.x + sh.grab.dx;
+          ty = sh.grab.y + sh.grab.dy;
         } else if (pointerOn) {
           const dx = sh.px - mx, dy = sh.py - my, d = Math.hypot(dx, dy) || 1;
           const reach = sh.R + 140;
@@ -569,7 +569,9 @@
       }
     };
 
-    // Grab to drag (and boing); release to spring home.
+    // Grab to drag (and boing); release to spring home. A grab follows its
+    // own pointer from where it went down: a touch has no pointermove before
+    // it lands, so the shared position would still be the previous touch.
     svg.addEventListener('pointerdown', (e) => {
       const group = e.target.closest('.shape');
       const sh = shapes.find((x) => x.group === group);
@@ -577,16 +579,22 @@
       e.preventDefault();
       sh.vs += 0.09;
       sh.vt += 14; // the Claude spark whirls
-      sh.grab = { dx: e.clientX - box.left - sh.px, dy: e.clientY - box.top - sh.py, id: e.pointerId };
+      sh.grab = { id: e.pointerId, x: e.clientX, y: e.clientY, dx: sh.px - e.clientX, dy: sh.py - e.clientY };
       try { group.setPointerCapture(e.pointerId); } catch { /* drag without capture */ }
     });
+    // Browsers ignore touch-action on SVG shapes, so a touch drag would turn
+    // into a page pan and cancel the grab. Keep touches on a shape for it.
+    svg.addEventListener('touchstart', (e) => {
+      if (!reduceMotion && e.target.closest('.shape')) e.preventDefault();
+    }, { passive: false });
+    window.addEventListener('pointermove', (e) => {
+      for (const sh of shapes) if (sh.grab && sh.grab.id === e.pointerId) { sh.grab.x = e.clientX; sh.grab.y = e.clientY; }
+    }, { passive: true });
     const release = (e) => {
       for (const sh of shapes) if (sh.grab && sh.grab.id === e.pointerId) { sh.grab = null; sh.vs += 0.05; }
     };
-    svg.addEventListener('pointerup', release);
-    svg.addEventListener('pointercancel', release);
-    // Touch drags update the shared pointer position too.
-    svg.addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
 
     layout();
     fontsReady.then(layout);
