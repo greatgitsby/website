@@ -550,15 +550,21 @@ p { margin: 0; }
 
 .pill svg { width: 16px; height: 16px; flex: none; }
 
-.pill:hover {
-  background: var(--fg);
-  border-color: var(--fg);
-  color: var(--bg);
+/* Hover styles only where hover is real: iOS keeps :hover on after a tap. */
+@media (hover: hover) {
+  .pill:hover {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+  }
 }
 
+/* Explicit width, not aspect-ratio: Safari sizes the flex row from the icon's
+   intrinsic width otherwise, and wraps every button onto its own line. */
 .pill.pill--icon {
+  width: var(--pill-size, 48px);
   height: var(--pill-size, 48px);
-  aspect-ratio: 1;
+  flex: none;
   padding: 0;
   justify-content: center;
 }
@@ -613,7 +619,16 @@ p { margin: 0; }
   height: 12px;
 }
 
-.pill--icon:hover .pill__tip,
+@media (hover: hover) {
+  .pill--icon:hover .pill__tip {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+    transition: opacity 0.25s, transform 0.4s var(--fluid), visibility 0s;
+  }
+}
+
 .pill--icon:focus-visible .pill__tip {
   opacity: 1;
   visibility: visible;
