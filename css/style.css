@@ -242,6 +242,7 @@ p { margin: 0; }
   z-index: 0;
   overflow: hidden; /* blobs run off the screen edges without adding scroll */
   pointer-events: none;
+  -webkit-tap-highlight-color: transparent; /* no grey box flashing over a tapped shape */
 }
 .blobs__svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .blobs .shape > * {
@@ -506,11 +507,14 @@ p { margin: 0; }
   transition: transform 1.2s var(--fluid), filter 0.8s;
 }
 
-.portrait:hover .portrait__blob img { transform: scale(1.42); filter: saturate(1.1) contrast(1.06); }
 /* On the larger live layer (116% of the box), nudge the photo down a touch
    so the top of the hair clears the blob's edge. */
 .portrait.is-live .portrait__blob img { transform: translateY(6%) scale(1.02); }
-.portrait.is-live:hover .portrait__blob img { transform: translateY(6%) scale(1.1); }
+/* Zoom on real hover only: a tap would leave it zoomed in. */
+@media (hover: hover) {
+  .portrait:hover .portrait__blob img { transform: scale(1.42); filter: saturate(1.1) contrast(1.06); }
+  .portrait.is-live:hover .portrait__blob img { transform: translateY(6%) scale(1.1); }
+}
 
 .hero__tagline {
   font-size: clamp(26px, 2.3vw, 60px);
