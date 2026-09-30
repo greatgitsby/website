@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Projects ⸱ Trey Moen</title>
+  <meta name="description" content="A few of the projects I have worked on.">
+  <meta name="theme-color" content="#0c0c0e">
+
+  <meta property="og:title" content="Projects ⸱ Trey Moen">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://moen.ai/blog/projects">
+  <meta property="og:image" content="https://moen.ai/img/graph.jpg">
+  <meta property="og:description" content="A few of the projects I have worked on.">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="../favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <link rel="manifest" href="../site.webmanifest">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@1,6..72,300..500&display=swap">
+  <link rel="stylesheet" href="../css/style.css">
+
+  <script>
+    document.documentElement.classList.add('js');
+    addEventListener('pagereveal', function (e) { if (e.viewTransition) document.documentElement.classList.add('vt'); });
+  </script>
+  <script src="../js/main.js" defer></script>
+</head>
+<body class="page-post">
+  <a class="skip" href="#content">Skip to content</a>
+  <div class="progress" aria-hidden="true"></div>
+
+  <header class="nav">
+    <a class="nav__mark" href="../index.html" aria-label="Trey Moen — home">TM<span class="nav__dot"></span></a>
+  </header>
+
+  <main class="article" id="content">
+    <header class="article__head">
+      <a class="back" href="../index.html#blog">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        <span class="mono">All posts</span>
+      </a>
+      <p class="article__meta mono"><span>Writing / 03</span><span>Personal · University · Work</span></p>
+      <h1 class="article__title" data-split="words">Projects</h1>
+      <p class="article__desc">A few of the projects I have worked on.</p>
+    </header>
+
+    <div class="article__body">
+      <aside class="article__aside mono">
+        <dl>
+          <div><dt>Published</dt><dd><time datetime="2021-07-13">2021.07.13</time></dd></div>
+          <div><dt>Updated</dt><dd><time datetime="2022-07-08">2022.07.08</time></dd></div>
+          <div><dt>On this page</dt><dd class="toc"><a href="#personal">Personal</a><a href="#university">University</a><a href="#work-history">Work</a></dd></div>
+        </dl>
+      </aside>
+
+      <article class="prose">
+        <p>The following is a collection of projects I have worked on in the past for both university, current, and past jobs. Any source code that is publicly available can be found on <a href="https://github.com/greatgitsby" target="_blank" rel="noopener">my GitHub</a> or <a href="https://gitlab.com/trey.moen" target="_blank" rel="noopener">my GitLab</a>.</p>
+
+        <h2 id="personal"><span class="mono">01 —</span>Personal</h2>
+
+        <section class="project" id="portfolio">
+          <h3 class="project__title"><a href="../index.html">Portfolio (this site)</a></h3>
+          <p class="project__meta mono">Personal · HTML, CSS, JavaScript</p>
+          <p>I created a website to hold portfolio items like this, my resume, as well as create “blog-like” posts to keep track of my own personal development. Earlier versions were a Markdown-based blog built on <a href="https://nextjs.org" target="_blank" rel="noopener">Next.js</a>; this one is plain HTML, CSS, and JavaScript, with no framework and no build step. The site is open-source, viewable on <a href="https://github.com/greatgitsby/website" target="_blank" rel="noopener">GitHub</a> if you would like to look through the code.</p>
+        </section>
+
+        <section class="project" id="wedding">
+          <h3 class="project__title"><a href="https://owen2moen.com" target="_blank" rel="noopener">Wedding Homepage</a></h3>
+          <p class="project__meta mono">Personal · owen2moen.com</p>
+          <p>I created a website for the wedding of myself and my incredible, super awesome fiancée <a href="https://www.linkedin.com/in/avery-owen-3502b8168" target="_blank" rel="noopener">Avery Owen</a>. It links to our RSVP system, hosts a page for our registries, and displays a gallery of images on the homepage. Feel free to view it at <a href="https://owen2moen.com" target="_blank" rel="noopener">owen2moen.com</a>. Source code is <a href="https://github.com/greatgitsby/wedding" target="_blank" rel="noopener">here</a>.</p>
+        </section>
+
+        <h2 id="university"><span class="mono">02 —</span>University</h2>
+        <p>Over my time at university, I had the privilege of building a number of interesting projects:</p>
+
+        <section class="project" id="bot-or-not">
+          <h3 class="project__title">Bot or not: modeling HTTP traffic to classify humans and bots</h3>
+          <p class="project__meta mono">University · Machine Learning and Computational Modeling</p>
+          <p class="chips"><a class="chip" href="https://ml.moen.ai" target="_blank" rel="noopener">Data Collection Site ↗</a><a class="chip" href="../pdf/botornot.pdf" target="_blank" rel="noopener">Paper ↗</a><a class="chip" href="https://github.com/greatgitsby/bot-detect" target="_blank" rel="noopener">Source Code ↗</a></p>
+          <p>For my <a href="http://jorr.cs.georgefox.edu/courses/csis441-machine-learning/" target="_blank" rel="noopener">Machine Learning and Computational Modeling</a> course, I chose to create a bot detection middleware for Python Flask applications (the goal of which was to generalize into an API or SaaS). It takes some metadata about an arbitrary request and attaches it to an identifiable ‘session’ (collection of requests from a ‘user’), and gauges whether or not the session is associated with a bot or a real human.</p>
+        </section>
+
+        <section class="project" id="senior-design">
+          <h3 class="project__title">Senior Design Projects</h3>
+          <p class="project__meta mono">University · Senior Design</p>
+          <p>During my senior year, I had a required course called Senior Design, with its goal to demonstrate the knowledge gained over the course of one’s time at George Fox. Some of the projects we worked on are discussed below — and in much more depth in <a href="vinetech.html">my capstone write-up</a>.</p>
+          <h4>VineViewer, an image quality and integrity checker</h4>
+          <p><span class="soon">Coming soon</span></p>
+          <h4>Rover Hardware</h4>
+          <p><span class="soon">Coming soon</span></p>
+          <h4>Rover Software</h4>
+          <p><span class="soon">Coming soon</span></p>
+        </section>
+
+        <section class="project" id="gfu-projects">
+          <h3 class="project__title"><a href="https://gfuprojects.com" target="_blank" rel="noopener">GFU Engineering Project Ideation Commission</a></h3>
+          <p class="project__meta mono">University · Servant Engineering</p>
+          <p>This website is for my Servant Engineering project during my third year at Fox. We created a workflow and set of resources for teachers at a local high school to submit project ideas and have us create what they had envisioned. Feel free to view it at <a href="https://gfuprojects.com" target="_blank" rel="noopener">gfuprojects.com</a>. The source is located <a href="https://github.com/greatgitsby/gfu-project-site" target="_blank" rel="noopener">here</a>.</p>
+        </section>
+
+        <section class="project" id="hansenlite">
+          <h3 class="project__title">HansenLite compiler</h3>
+          <p class="project__meta mono">University · Java → ARMv7</p>
+          <p>I wrote a compiler for the HansenLite language, created by Dr. David Hansen of George Fox University. It targets the ARMv7 assembly language, is written in Java and located <a href="https://github.com/greatgitsby/hlc" target="_blank" rel="noopener">here</a>.</p>
+        </section>
+
+        <h2 id="work-history"><span class="mono">03 —</span>Work</h2>
+
+        <section class="project" id="guardduty">
+          <h3 class="project__title">AWS GuardDuty Alert and Auto-remediation System</h3>
+          <p class="project__meta mono">Work · E&amp;J Gallo Winery</p>
+          <p>I developed an alert and auto-remediation system powered by AWS GuardDuty, a threat detection service powered by machine learning. Personnel are notified via Microsoft Teams and compromised resources are contained or disabled when GuardDuty detects a new Finding, all in real-time. Implemented with Lambda, SQS, CloudFormation, Secrets Manager, and some vendor APIs to facilitate remediations.</p>
+        </section>
+
+        <section class="project" id="client-dashboard">
+          <h3 class="project__title">Client Dashboard</h3>
+          <p class="project__meta mono">Work · Simple Monitors</p>
+          <p>I built a dashboard for Simple Monitors clients to manage their webhook configurations, authentication, and release channels. It leverages HTML/CSS/jQuery and is served by a simple Node.js application and it runs on a simple Heroku configuration.</p>
+        </section>
+
+        <section class="project" id="admin-dashboard">
+          <h3 class="project__title">Web Scraper Administration Dashboard</h3>
+          <p class="project__meta mono">Work · Simple Monitors</p>
+          <p>I built a dashboard for internal management of sites and products monitored by our web scraping platform. Each site ‘platform’ has a dedicated page to display its active configurations and perform C.R.U.D. operations.</p>
+        </section>
+
+        <section class="project" id="scraping-platform">
+          <h3 class="project__title">Scalable Web Scraping Platform</h3>
+          <p class="project__meta mono">Work · Simple Monitors</p>
+          <p>The management dashboard would hold very little value without the scraping platform itself. I created a fully distributed scraping platform to monitor product additions and restocks. The platform is backed by a Kubernetes cluster and leverages technologies like Redis, an MPI-like layer on top of Redis, and various Node.js microservices.</p>
+        </section>
+
+        <section class="project" id="rest-api">
+          <h3 class="project__title">Database REST API</h3>
+          <p class="project__meta mono">Work · Simple Monitors</p>
+          <p>I built a REST API for accessing our database configurations. It supported JWT and API key authentication and scope-based access for those using JWT to access (our admin dashboard). I used TypeScript and MongoDB as the primary technologies for this project, and it was hosted on a multi-node Heroku application.</p>
+        </section>
+
+        <section class="project" id="tls-client">
+          <h3 class="project__title">HTTP client for TLS spoofing</h3>
+          <p class="project__meta mono">Work · Simple Monitors</p>
+          <p>I designed an HTTP client that allows for spoofing of TLS Client-Hello packets. These initial packets are used in many bot protections and allowed for fine-tuning of our scrapers to look like authentic browsers, even past a User-Agent modification. The library was written in Node.js and bootstrapped to a Go program that facilitated the network requests.</p>
+        </section>
+
+        <section class="project" id="grafana">
+          <h3 class="project__title">Grafana Implementation</h3>
+          <p class="project__meta mono">Work · Simple Monitors</p>
+          <p>I implemented Grafana and Prometheus to get live stats on our distribution pipeline and overall Kubernetes cluster health. Below is an abbreviated view of the dashboard I created.</p>
+          <figure>
+            <img src="../img/graph.jpg" alt="Grafana dashboard showing distribution pipeline and cluster metrics" width="2000" height="1092" loading="lazy">
+            <figcaption>Grafana dashboard</figcaption>
+          </figure>
+        </section>
+
+      </article>
+
+      <footer class="article__foot mono">Last updated <time datetime="2022-07-08">2022.07.08</time></footer>
+    </div>
+
+    <nav class="next" aria-label="Next post">
+      <a class="next__link liquid" href="vinetech.html">
+        <span class="mono next__label">Next — 01</span>
+        <span class="next__title">Senior Capstone Project</span>
+        <span class="next__arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>
+    </nav>
+  </main>
+
+  <footer class="footer mono">
+    <p>© <span data-year>2026</span> Trey Moen. All rights reserved.</p>
+  </footer>
+
+  <dialog class="lightbox" aria-label="Image viewer">
+    <figure><img alt=""><figcaption class="mono"></figcaption></figure>
+  </dialog>
+</body>
+</html>
