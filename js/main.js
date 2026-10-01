@@ -513,7 +513,7 @@
     const RAYS = SPARK.map(([x, y]) => [Math.hypot(x - 12, y - 12), Math.atan2(y - 12, x - 12)])
       .filter(([r], i, all) => r > 10 && r >= all[(i + all.length - 1) % all.length][0] && r >= all[(i + 1) % all.length][0])
       .map(([, a]) => a).sort((p, q) => p - q);
-    const PULL = { '-1': 0.9, 0: 0.66, 1: 0.76, 2: 0.9 }; // frames since a ray's turn → its length
+    const PULL = { '-1': 0.94, 0: 0.8, 1: 0.86, 2: 0.94 }; // frames since a ray's turn → its length
     const noise = (k, n) => { const v = Math.sin(k * 127.1 + n * 311.7) * 43758.5453; return v - Math.floor(v); };
     const spark = (sh, time) => {
       const frame = Math.floor(time / 0.083 + sh.seed * 5), n = RAYS.length;
