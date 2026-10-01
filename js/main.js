@@ -394,8 +394,29 @@
     };
 
     // The Claude spark's outline as points on a 24×24 grid (centred on
-    // 12,12), so its rays can stretch and pull back one after another.
+    // 12,12), so its rays can be redrawn one by one.
     const SPARK = '4.709,15.955 9.429,13.308 9.509,13.078 9.429,12.95 9.2,12.95 8.41,12.902 5.712,12.829 3.373,12.732 1.107,12.61 .536,12.489 0,11.784 .055,11.432 .535,11.111 1.221,11.171 2.741,11.274 5.019,11.432 6.671,11.529 9.12,11.784 9.509,11.784 9.564,11.627 9.43,11.529 9.327,11.432 6.969,9.836 4.417,8.148 3.081,7.176 2.357,6.685 1.993,6.223 1.835,5.215 2.491,4.493 3.372,4.553 3.597,4.614 4.49,5.3 6.398,6.776 8.889,8.609 9.254,8.913 9.399,8.81 9.418,8.737 9.254,8.463 7.899,6.017 6.453,3.527 5.809,2.495 5.639,1.876 5.535,1.147 6.283,.134 6.696,0 7.692,.134 8.112,.498 8.732,1.912 9.734,4.141 11.289,7.171 11.745,8.069 11.988,8.901 12.079,9.156 12.237,9.156 12.237,9.01 12.365,7.304 12.602,5.209 12.832,2.514 12.912,1.754 13.288,.844 14.035,.352 14.619,.632 15.099,1.317 15.032,1.761 14.746,3.612 14.187,6.515 13.823,8.457 14.035,8.457 14.278,8.215 15.263,6.909 16.915,4.845 17.645,4.025 18.495,3.121 19.042,2.69 20.075,2.69 20.835,3.819 20.495,4.985 19.431,6.332 18.55,7.474 17.286,9.174 16.496,10.534 16.569,10.644 16.757,10.624 19.613,10.018 21.156,9.738 22.997,9.423 23.83,9.811 23.921,10.206 23.593,11.013 21.624,11.499 19.315,11.961 15.876,12.774 15.834,12.804 15.883,12.865 17.432,13.011 18.094,13.047 19.716,13.047 22.736,13.272 23.526,13.794 24,14.432 23.921,14.917 22.706,15.537 21.066,15.148 17.237,14.238 15.925,13.909 15.743,13.909 15.743,14.019 16.836,15.087 18.842,16.897 21.351,19.227 21.478,19.805 21.156,20.26 20.816,20.211 18.611,18.554 17.76,17.807 15.834,16.187 15.706,16.187 15.706,16.357 16.15,17.006 18.495,20.527 18.617,21.607 18.447,21.96 17.839,22.173 17.171,22.051 15.797,20.126 14.382,17.959 13.239,16.016 13.099,16.096 12.425,23.35 12.109,23.72 11.38,24 10.773,23.539 10.451,22.792 10.773,21.316 11.162,19.392 11.477,17.862 11.763,15.962 11.933,15.33 11.921,15.288 11.781,15.306 10.347,17.273 8.167,20.218 6.441,22.063 6.027,22.227 5.31,21.857 5.377,21.195 5.778,20.606 8.166,17.57 9.606,15.688 10.536,14.602 10.53,14.444 10.475,14.444 4.132,18.56 3.002,18.706 2.515,18.25 2.576,17.504 2.807,17.261 4.715,15.949 4.709,15.955'.split(' ').map((p) => p.split(',').map(Number));
+    // Split the outline into its twelve rays, cutting at the valleys where
+    // it dips back to the core. Each point is kept as a distance along its
+    // ray's axis and an offset across it, so a ray can change length and lean
+    // without getting fatter.
+    const CORE = 4;
+    const RAYS = [], SPARK_PTS = [];
+    {
+      const n = SPARK.length, rad = SPARK.map(([x, y]) => Math.hypot(x - 12, y - 12));
+      const cuts = rad.flatMap((r, i) => (r < 6 && r <= rad[(i + n - 1) % n] && r < rad[(i + 1) % n] ? [i] : []));
+      cuts.forEach((from, k) => {
+        const count = (cuts[(k + 1) % cuts.length] - from + n) % n;
+        const idx = Array.from({ length: count }, (_, j) => (from + j) % n);
+        const tip = idx.reduce((a, b) => (rad[b] > rad[a] ? b : a));
+        const ux = (SPARK[tip][0] - 12) / rad[tip], uy = (SPARK[tip][1] - 12) / rad[tip];
+        RAYS.push([ux, uy, (Math.atan2(uy, ux) / (2 * Math.PI) + 1) % 1]); // axis, and how far round it sits
+        for (const i of idx) {
+          const dx = SPARK[i][0] - 12, dy = SPARK[i][1] - 12;
+          SPARK_PTS.push([k, dx * ux + dy * uy, dy * ux - dx * uy]);
+        }
+      });
+    }
     // The Claude spark and the Codex cloud, as 24×24 artwork centred on
     // 12,12. The Codex cursor is kept apart so it can blink.
     const LOGO = {
@@ -427,8 +448,8 @@
         case 'claude':
         case 'codex': {
           const logo = add(setStyle(el('path', { d: LOGO[spec.kind], transform: `scale(${(R / 12).toFixed(3)}) translate(-12 -12)` }),
-            { fill: spec.color, fillRule: 'evenodd' }));
-          if (spec.kind === 'codex' || !reduceMotion) live = logo; // the cursor blinks; the spark's rays pulse
+            { fill: spec.color, fillRule: spec.kind === 'codex' ? 'evenodd' : 'nonzero' }));
+          if (spec.kind === 'codex' || !reduceMotion) live = logo; // the cursor blinks; the spark's rays wriggle
           break;
         }
         case 'ring':
@@ -447,7 +468,7 @@
       group.classList.add('shape');
       svg.append(group);
       return { group, seed: n * 1.93 + 0.4, spec: null, live: null, R: 0, hx: 0, hy: 0, px: NaN, py: 0, vx: 0, vy: 0,
-        scale: 1, vs: 0, turn: 0, vt: 0, dent: 0, dentAt: 0, grab: null, shown: false };
+        scale: 1, vs: 0, frame: -1, burst: -1e3, dent: 0, dentAt: 0, grab: null, shown: false };
     });
 
     let box = hero.getBoundingClientRect();
@@ -473,6 +494,7 @@
         if (sh.key !== key) {
           sh.key = key;
           sh.live = build(sh.group, spec, R);
+          sh.frame = -1;
           sh.fresh = true;
         }
         sh.hx = spec.fx * W;
@@ -505,26 +527,37 @@
       return smoothPath(pts);
     };
 
-    // Like a loading spinner: a soft swell runs clockwise around the spark,
-    // about once a second, over a gentle breathing and rippling of the rays.
-    const spark = (sh, t) => {
-      const breathe = 0.95 + 0.03 * Math.sin(t * 2.2 + sh.seed);
+    // Like the spark in the Claude apps: hand-drawn, a new drawing twelve
+    // times a second. It loads: a sweep runs clockwise round the spark, each
+    // ray snapping short as it passes and growing back behind it. Tapped, it
+    // pulses a few times first: in to a dot and bursting back out,
+    // overshooting before it settles.
+    const FPS = 12, LAP = 20;
+    const PULSE = [0.55, 0.15, 0, 0, 0.45, 0.95, 1, 1.3, 1.3, 1, 1, 1]; // ray length, frame by frame
+    const PULSING = PULSE.length * 3;
+    const spark = (sh, frame) => {
+      const t = frame / FPS, since = frame - sh.burst; // frames since the tap
+      const size = since < PULSING ? PULSE.at(since % PULSE.length) : 1;
+      const head = (since - PULSING) / LAP; // laps swept since the pulsing ended
+      const rays = RAYS.map(([ux, uy, round], k) => {
+        // How far (in laps) the sweep has gone on past this ray; a ray stays
+        // short for a sixth of a lap, and is full again within half of one.
+        const past = head - round, behind = past < 0 ? 1 : past % 1;
+        const grow = Math.min(1, Math.max(0, (behind - 0.17) / 0.3));
+        const len = size * (0.35 + 0.65 * grow * grow * (3 - 2 * grow) + 0.06 * Math.sin(t * 5.3 + k * 2.4 + sh.seed));
+        const lean = 0.04 * Math.sin(t * 6.7 + k * 3.3 + sh.seed);
+        const c = Math.cos(lean), s = Math.sin(lean);
+        return [ux * c - uy * s, ux * s + uy * c, len];
+      });
       let d = '';
-      for (const [x, y] of SPARK) {
-        const dx = x - 12, dy = y - 12, a = Math.atan2(dy, dx);
-        const f = breathe + 0.18 * ((1 + Math.cos(a - t * 6 - sh.seed)) / 2) ** 4
-          + 0.06 * Math.sin(5 * a + t * 3.1) + 0.04 * Math.sin(3 * a - t * 2.3 + sh.seed);
-        d += `${d ? 'L' : 'M'}${(12 + dx * f).toFixed(2)},${(12 + dy * f).toFixed(2)}`;
+      for (const [k, a, b] of SPARK_PTS) {
+        const [ux, uy, len] = rays[k];
+        const along = a > CORE ? CORE + (a - CORE) * len : a;
+        let x = along * ux - b * uy, y = along * uy + b * ux;
+        if (!size) { const h = CORE / Math.hypot(x, y); x *= h; y *= h; } // rounded off into the dot
+        d += `${d ? 'L' : 'M'}${(12 + x).toFixed(2)},${(12 + y).toFixed(2)}`;
       }
       return `${d}Z`;
-    };
-
-    // The spark doesn't glide round: it ticks, a quick snap forward with a
-    // little overshoot, then a hold, like the spinner in the Claude apps.
-    const TICK = 0.9, SNAP = 0.18, STEP = 15;
-    const tick = (t) => {
-      const n = Math.floor(t / TICK), u = Math.min(1, (t - n * TICK) / (TICK * SNAP)) - 1;
-      return (n + 1 + u * u * (2.7 * u + 1.7)) * STEP; // ease-out with overshoot
     };
 
     function render(sh, t) {
@@ -532,10 +565,11 @@
       // Gentle sway, except for shapes with a flat edge, which stay level.
       const sway = spec.kind === 'half' ? 0 : 4;
       let angle = (spec.rot || 0) + Math.sin(t * 0.4 + sh.seed) * sway;
-      if (spec.kind === 'claude') angle = (sh.turn + tick(t + sh.seed) + sh.seed * 40) % 360;
-      if (sh.live) {
-        sh.live.setAttribute('d', spec.kind === 'claude' ? spark(sh, t)
-          : spec.kind === 'codex' ? (t % 1.06 < 0.53 ? LOGO.codex + CURSOR : LOGO.codex)
+      if (sh.live && spec.kind === 'claude') {
+        const frame = Math.floor(t * FPS);
+        if (frame !== sh.frame) sh.live.setAttribute('d', spark(sh, sh.frame = frame));
+      } else if (sh.live) {
+        sh.live.setAttribute('d', spec.kind === 'codex' ? (t % 1.06 < 0.53 ? LOGO.codex + CURSOR : LOGO.codex)
           : organic(sh, t));
       }
       sh.group.setAttribute('transform', `translate(${sh.px.toFixed(1)} ${sh.py.toFixed(1)}) rotate(${angle.toFixed(2)}) scale(${sh.scale.toFixed(3)})`);
@@ -572,8 +606,6 @@
         sh.py += sh.vy;
         sh.vs = (sh.vs + (1 - sh.scale) * 0.16) * 0.84; // boing
         sh.scale += sh.vs;
-        sh.vt *= 0.97; // spin (the Claude spark), settling back to its ticking
-        sh.turn += sh.vt;
       }
     };
 
@@ -586,7 +618,7 @@
       if (!sh || reduceMotion) return;
       e.preventDefault();
       sh.vs += 0.09;
-      sh.vt += 14; // the Claude spark whirls
+      sh.burst = sh.frame + 1; // the Claude spark pulses
       sh.grab = { id: e.pointerId, x: e.clientX, y: e.clientY, dx: sh.px - e.clientX, dy: sh.py - e.clientY };
       try { group.setPointerCapture(e.pointerId); } catch { /* drag without capture */ }
     });
