@@ -505,29 +505,40 @@
       return smoothPath(pts);
     };
 
-    // Like a loader: the rays reach out one after another, clockwise round
-    // the spark, each stretching a little and easing back as the next goes.
+    // Like a loader, drawn like a cartoon: the rays reach out one after
+    // another, clockwise round the spark, tugging their neighbours along,
+    // and the drawing changes only a dozen times a second, each frame a
+    // little different, so the outline boils like hand-drawn animation.
     // The spark as a whole turns smoothly.
     const RAYS = SPARK.map(([x, y]) => [Math.hypot(x - 12, y - 12), Math.atan2(y - 12, x - 12)])
       .filter(([r], i, all) => r > 10 && r >= all[(i + all.length - 1) % all.length][0] && r >= all[(i + 1) % all.length][0])
       .map(([, a]) => a).sort((p, q) => p - q);
-    const spark = (sh, t) => {
+    const noise = (k, n) => { const v = Math.sin(k * 127.1 + n * 311.7) * 43758.5453; return v - Math.floor(v); };
+    const spark = (sh, time) => {
+      const frame = Math.floor(time * 12), t = frame / 12;
       const beat = t * 10 + sh.seed * 7; // rays per second
+      const n = RAYS.length;
       const reach = RAYS.map((a, k) => {
-        const p = (((beat - k) % RAYS.length) + RAYS.length) % RAYS.length; // time since this ray's turn
-        return { a, len: 1 + 0.14 * (p < 0.4 ? p / 0.4 : Math.exp(-(p - 0.4) / 1.2)) };
+        let p = (((beat - k) % n) + n) % n; // time since this ray's turn
+        if (p > n - 1.5) p -= n; // its turn is coming: the ray just ahead leans in
+        const pull = p < 0 ? Math.exp(-((p / 0.7) ** 2)) * 0.5 : p < 0.4 ? p / 0.4 : Math.exp(-(p - 0.4) / 1.6);
+        return {
+          a, len: 1 + 0.15 * pull + 0.05 * (noise(k, frame) - 0.5),
+          lean: (noise(k + 40, frame) - 0.5) * 0.07 + 0.05 * pull,
+        };
       });
       let d = '';
-      for (const [x, y] of SPARK) {
-        const dx = x - 12, dy = y - 12, a = Math.atan2(dy, dx);
-        let w = 0, len = 0;
+      SPARK.forEach(([x, y], i) => {
+        const dx = x - 12, dy = y - 12, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
+        let w = 0, len = 0, lean = 0;
         for (const ray of reach) {
           const gap = Math.atan2(Math.sin(a - ray.a), Math.cos(a - ray.a)), wt = Math.exp(-((gap / 0.12) ** 2));
-          w += wt; len += wt * ray.len;
+          w += wt; len += wt * ray.len; lean += wt * ray.lean;
         }
-        const f = w ? len / w : 1;
-        d += `${d ? 'L' : 'M'}${(12 + dx * f).toFixed(2)},${(12 + dy * f).toFixed(2)}`;
-      }
+        const f = (w ? len / w : 1) + 0.012 * (noise(i + 90, frame) - 0.5); // the line boils
+        const turn = a + (w ? lean / w : 0) * Math.min(1, r / 6);
+        d += `${d ? 'L' : 'M'}${(12 + Math.cos(turn) * r * f).toFixed(2)},${(12 + Math.sin(turn) * r * f).toFixed(2)}`;
+      });
       return `${d}Z`;
     };
 
