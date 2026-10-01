@@ -505,26 +505,26 @@
       return smoothPath(pts);
     };
 
-    // Like a loader, drawn like a cartoon: the rays reach out one after
-    // another, clockwise round the spark, tugging their neighbours along,
-    // and the drawing changes only a dozen times a second, each frame a
-    // little different, so the outline boils like hand-drawn animation.
+    // Drawn like Claude Code's spinner, which flips through · ✢ ✳ ✶ ✻ ✽
+    // and back, a new drawing every 120ms: the rays grow out in waves, the
+    // four nearest the cardinal points first, then the diagonals, then the
+    // rest, each frame redrawn a little differently, then pull back in.
     // The spark as a whole turns smoothly.
     const RAYS = SPARK.map(([x, y]) => [Math.hypot(x - 12, y - 12), Math.atan2(y - 12, x - 12)])
       .filter(([r], i, all) => r > 10 && r >= all[(i + all.length - 1) % all.length][0] && r >= all[(i + 1) % all.length][0])
-      .map(([, a]) => a).sort((p, q) => p - q);
+      .map(([, a]) => {
+        const off = Math.abs(((((a * 180) / Math.PI) % 90) + 90) % 90 - 45); // 45 on a cardinal point, 0 on a diagonal
+        return { a, wave: off > 33 ? 1 : off < 12 ? 2 : 3 };
+      });
     const noise = (k, n) => { const v = Math.sin(k * 127.1 + n * 311.7) * 43758.5453; return v - Math.floor(v); };
     const spark = (sh, time) => {
-      const frame = Math.floor(time * 12), t = frame / 12;
-      const beat = t * 10 + sh.seed * 7; // rays per second
-      const n = RAYS.length;
-      const reach = RAYS.map((a, k) => {
-        let p = (((beat - k) % n) + n) % n; // time since this ray's turn
-        if (p > n - 1.5) p -= n; // its turn is coming: the ray just ahead leans in
-        const pull = p < 0 ? Math.exp(-((p / 0.7) ** 2)) * 0.5 : p < 0.4 ? p / 0.4 : Math.exp(-(p - 0.4) / 1.6);
+      const frame = Math.floor(time / 0.12 + sh.seed * 5), beat = frame % 12;
+      const level = beat < 6 ? beat : 11 - beat; // 0 (·) up to 5 (✽) and back
+      const reach = RAYS.map((ray, k) => {
+        const out = Math.min(1, Math.max(0, (level - ray.wave + 1) / 3));
         return {
-          a, len: 1 + 0.15 * pull + 0.05 * (noise(k, frame) - 0.5),
-          lean: (noise(k + 40, frame) - 0.5) * 0.07 + 0.05 * pull,
+          a: ray.a, len: 0.8 + 0.24 * out + 0.06 * (noise(k, frame) - 0.5),
+          lean: (noise(k + 40, frame) - 0.5) * 0.08,
         };
       });
       let d = '';
