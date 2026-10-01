@@ -519,12 +519,20 @@
       return `${d}Z`;
     };
 
+    // The spark doesn't glide round: it ticks, a quick snap forward with a
+    // little overshoot, then a hold, like the spinner in the Claude apps.
+    const TICK = 0.9, SNAP = 0.18, STEP = 15;
+    const tick = (t) => {
+      const n = Math.floor(t / TICK), u = Math.min(1, (t - n * TICK) / (TICK * SNAP)) - 1;
+      return (n + 1 + u * u * (2.7 * u + 1.7)) * STEP; // ease-out with overshoot
+    };
+
     function render(sh, t) {
       const spec = sh.spec;
       // Gentle sway, except for shapes with a flat edge, which stay level.
       const sway = spec.kind === 'half' ? 0 : 4;
       let angle = (spec.rot || 0) + Math.sin(t * 0.4 + sh.seed) * sway;
-      if (spec.kind === 'claude') angle = (sh.turn + sh.seed * 40) % 360;
+      if (spec.kind === 'claude') angle = (sh.turn + tick(t + sh.seed) + sh.seed * 40) % 360;
       if (sh.live) {
         sh.live.setAttribute('d', spec.kind === 'claude' ? spark(sh, t)
           : spec.kind === 'codex' ? (t % 1.06 < 0.53 ? LOGO.codex + CURSOR : LOGO.codex)
@@ -564,7 +572,7 @@
         sh.py += sh.vy;
         sh.vs = (sh.vs + (1 - sh.scale) * 0.16) * 0.84; // boing
         sh.scale += sh.vs;
-        sh.vt += (0.1 - sh.vt) * 0.03; // spin (the Claude spark), easing back to a slow turn
+        sh.vt *= 0.97; // spin (the Claude spark), settling back to its ticking
         sh.turn += sh.vt;
       }
     };
