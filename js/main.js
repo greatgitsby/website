@@ -507,33 +507,30 @@
 
     // Like a loader, but staccato: every 83ms the next ray clockwise jerks
     // in short, its neighbours flinch with it, and it snaps back out over a
-    // couple of frames. No easing between frames, and each frame redrawn a
-    // little differently, like hand-drawn animation. The spark as a whole
+    // couple of frames, with no easing between frames. The spark as a whole
     // turns smoothly.
     const RAYS = SPARK.map(([x, y]) => [Math.hypot(x - 12, y - 12), Math.atan2(y - 12, x - 12)])
       .filter(([r], i, all) => r > 10 && r >= all[(i + all.length - 1) % all.length][0] && r >= all[(i + 1) % all.length][0])
       .map(([, a]) => a).sort((p, q) => p - q);
     const PULL = { '-1': 0.94, 0: 0.8, 1: 0.86, 2: 0.94 }; // frames since a ray's turn → its length
-    const noise = (k, n) => { const v = Math.sin(k * 127.1 + n * 311.7) * 43758.5453; return v - Math.floor(v); };
     const spark = (sh, time) => {
       const frame = Math.floor(time / 0.083 + sh.seed * 5), n = RAYS.length;
       const reach = RAYS.map((a, k) => {
         let p = (((frame - k) % n) + n) % n;
         if (p === n - 1) p = -1;
-        return { a, len: (PULL[p] ?? 1) + 0.05 * (noise(k, frame) - 0.5), lean: (noise(k + 40, frame) - 0.5) * 0.06 };
+        return { a, len: PULL[p] ?? 1 };
       });
       let d = '';
-      SPARK.forEach(([x, y], i) => {
-        const dx = x - 12, dy = y - 12, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
-        let w = 0, len = 0, lean = 0;
+      for (const [x, y] of SPARK) {
+        const dx = x - 12, dy = y - 12, a = Math.atan2(dy, dx);
+        let w = 0, len = 0;
         for (const ray of reach) {
           const gap = Math.atan2(Math.sin(a - ray.a), Math.cos(a - ray.a)), wt = Math.exp(-((gap / 0.12) ** 2));
-          w += wt; len += wt * ray.len; lean += wt * ray.lean;
+          w += wt; len += wt * ray.len;
         }
-        const f = (w ? len / w : 1) + 0.012 * (noise(i + 90, frame) - 0.5); // the line boils
-        const turn = a + (w ? lean / w : 0) * Math.min(1, r / 6);
-        d += `${d ? 'L' : 'M'}${(12 + Math.cos(turn) * r * f).toFixed(2)},${(12 + Math.sin(turn) * r * f).toFixed(2)}`;
-      });
+        const f = w ? len / w : 1;
+        d += `${d ? 'L' : 'M'}${(12 + dx * f).toFixed(2)},${(12 + dy * f).toFixed(2)}`;
+      }
       return `${d}Z`;
     };
 
