@@ -505,19 +505,29 @@
       return smoothPath(pts);
     };
 
-    // Like a loading spinner: a soft swell runs clockwise around the spark,
-    // about once a second, over a gentle breathing and rippling of the rays.
-    // The rays move in steps, a few times a second, rather than gliding, the
-    // way the spark twitches in the Claude apps; the turn stays smooth.
-    const spark = (sh, time) => {
-      const t = Math.floor(time * 8) / 8;
-      const breathe = 0.95 + 0.03 * Math.sin(t * 2.2 + sh.seed);
+    // Each ray twitches on its own: a few times a second, at its own pace,
+    // it snaps to a new length and a slight lean, the way the spark moves in
+    // the Claude apps. The spark as a whole turns smoothly.
+    const RAYS = SPARK.map(([x, y]) => [Math.hypot(x - 12, y - 12), Math.atan2(y - 12, x - 12)])
+      .filter(([r], i, all) => r > 10 && r >= all[(i + all.length - 1) % all.length][0] && r >= all[(i + 1) % all.length][0])
+      .map(([, a], k) => ({ a, rate: 4 + ((k * 5) % 7) * 0.8, phase: k * 0.37 }));
+    const noise = (k, n) => { const v = Math.sin(k * 127.1 + n * 311.7) * 43758.5453; return v - Math.floor(v); };
+    const spark = (sh, t) => {
+      const breathe = 0.97 + 0.02 * Math.sin(t * 2.2 + sh.seed);
+      const pose = RAYS.map((ray, k) => {
+        const n = Math.floor(t * ray.rate + ray.phase + sh.seed);
+        return { a: ray.a, len: 0.86 + 0.26 * noise(k, n), lean: (noise(k + 50, n) - 0.5) * 0.12 };
+      });
       let d = '';
       for (const [x, y] of SPARK) {
-        const dx = x - 12, dy = y - 12, a = Math.atan2(dy, dx);
-        const f = breathe + 0.18 * ((1 + Math.cos(a - t * 6 - sh.seed)) / 2) ** 4
-          + 0.06 * Math.sin(5 * a + t * 3.1) + 0.04 * Math.sin(3 * a - t * 2.3 + sh.seed);
-        d += `${d ? 'L' : 'M'}${(12 + dx * f).toFixed(2)},${(12 + dy * f).toFixed(2)}`;
+        const dx = x - 12, dy = y - 12, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
+        let w = 0, len = 0, lean = 0;
+        for (const p of pose) {
+          const gap = Math.atan2(Math.sin(a - p.a), Math.cos(a - p.a)), wt = Math.exp(-((gap / 0.12) ** 2));
+          w += wt; len += wt * p.len; lean += wt * p.lean;
+        }
+        const f = breathe * (w ? len / w : 1), turn = a + (w ? lean / w : 0) * Math.min(1, r / 6);
+        d += `${d ? 'L' : 'M'}${(12 + Math.cos(turn) * r * f).toFixed(2)},${(12 + Math.sin(turn) * r * f).toFixed(2)}`;
       }
       return `${d}Z`;
     };
