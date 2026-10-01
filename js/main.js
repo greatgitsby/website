@@ -505,31 +505,26 @@
       return smoothPath(pts);
     };
 
-    // Like a loader, but staccato: every 83ms the next ray clockwise jerks
-    // in short, its neighbours flinch with it, and it snaps back out over a
-    // couple of frames, with no easing between frames. The spark as a whole
-    // turns smoothly.
+    // Like a loader, but staccato: one ray at a time jerks in short, and
+    // snaps straight back out as the next ray clockwise takes its turn, a
+    // new one every 83ms. Each pull is drawn a little differently (how far
+    // the ray goes in, which way it bends, how much it fattens), as if by
+    // hand. The spark as a whole turns smoothly.
     const RAYS = SPARK.map(([x, y]) => [Math.hypot(x - 12, y - 12), Math.atan2(y - 12, x - 12)])
       .filter(([r], i, all) => r > 10 && r >= all[(i + all.length - 1) % all.length][0] && r >= all[(i + 1) % all.length][0])
       .map(([, a]) => a).sort((p, q) => p - q);
-    const PULL = { '-1': 0.94, 0: 0.8, 1: 0.86, 2: 0.94 }; // frames since a ray's turn → its length
+    const noise = (k, n) => { const v = Math.sin(k * 127.1 + n * 311.7) * 43758.5453; return v - Math.floor(v); };
     const spark = (sh, time) => {
       const frame = Math.floor(time / 0.083 + sh.seed * 5), n = RAYS.length;
-      const reach = RAYS.map((a, k) => {
-        let p = (((frame - k) % n) + n) % n;
-        if (p === n - 1) p = -1;
-        return { a, len: PULL[p] ?? 1 };
-      });
+      const k = frame % n, lap = Math.floor(frame / n), ray = RAYS[k];
+      const depth = 0.77 + 0.07 * noise(k, lap), bend = (noise(k + 20, lap) - 0.5) * 0.09, fat = 1.1 + 0.15 * noise(k + 40, lap);
       let d = '';
       for (const [x, y] of SPARK) {
-        const dx = x - 12, dy = y - 12, a = Math.atan2(dy, dx);
-        let w = 0, len = 0;
-        for (const ray of reach) {
-          const gap = Math.atan2(Math.sin(a - ray.a), Math.cos(a - ray.a)), wt = Math.exp(-((gap / 0.12) ** 2));
-          w += wt; len += wt * ray.len;
-        }
-        const f = w ? len / w : 1;
-        d += `${d ? 'L' : 'M'}${(12 + dx * f).toFixed(2)},${(12 + dy * f).toFixed(2)}`;
+        const dx = x - 12, dy = y - 12, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
+        const gap = Math.atan2(Math.sin(a - ray), Math.cos(a - ray)), wt = Math.exp(-((gap / 0.12) ** 2));
+        const rr = r * (1 - wt * (1 - depth));
+        const aa = a + wt * ((fat - 1) * gap + bend * (r / 12) ** 2);
+        d += `${d ? 'L' : 'M'}${(12 + Math.cos(aa) * rr).toFixed(2)},${(12 + Math.sin(aa) * rr).toFixed(2)}`;
       }
       return `${d}Z`;
     };
