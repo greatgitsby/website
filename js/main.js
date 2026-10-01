@@ -505,27 +505,22 @@
       return smoothPath(pts);
     };
 
-    // Drawn like Claude Code's spinner, which flips through · ✢ ✳ ✶ ✻ ✽
-    // and back, a new drawing every 120ms: the rays grow out in waves, the
-    // four nearest the cardinal points first, then the diagonals, then the
-    // rest, each frame redrawn a little differently, then pull back in.
-    // The spark as a whole turns smoothly.
+    // Like a loader, but staccato: every 100ms the next ray clockwise jerks
+    // in short, its neighbours flinch with it, and it snaps back out over a
+    // couple of frames. No easing between frames, and each frame redrawn a
+    // little differently, like hand-drawn animation. The spark as a whole
+    // turns smoothly.
     const RAYS = SPARK.map(([x, y]) => [Math.hypot(x - 12, y - 12), Math.atan2(y - 12, x - 12)])
       .filter(([r], i, all) => r > 10 && r >= all[(i + all.length - 1) % all.length][0] && r >= all[(i + 1) % all.length][0])
-      .map(([, a]) => {
-        const off = Math.abs(((((a * 180) / Math.PI) % 90) + 90) % 90 - 45); // 45 on a cardinal point, 0 on a diagonal
-        return { a, wave: off > 33 ? 1 : off < 12 ? 2 : 3 };
-      });
+      .map(([, a]) => a).sort((p, q) => p - q);
+    const PULL = { '-1': 0.86, 0: 0.56, 1: 0.68, 2: 0.86 }; // frames since a ray's turn → its length
     const noise = (k, n) => { const v = Math.sin(k * 127.1 + n * 311.7) * 43758.5453; return v - Math.floor(v); };
     const spark = (sh, time) => {
-      const frame = Math.floor(time / 0.12 + sh.seed * 5), beat = frame % 12;
-      const level = beat < 6 ? beat : 11 - beat; // 0 (·) up to 5 (✽) and back
-      const reach = RAYS.map((ray, k) => {
-        const out = Math.min(1, Math.max(0, (level - ray.wave + 1) / 3));
-        return {
-          a: ray.a, len: 0.8 + 0.24 * out + 0.06 * (noise(k, frame) - 0.5),
-          lean: (noise(k + 40, frame) - 0.5) * 0.08,
-        };
+      const frame = Math.floor(time / 0.1 + sh.seed * 5), n = RAYS.length;
+      const reach = RAYS.map((a, k) => {
+        let p = (((frame - k) % n) + n) % n;
+        if (p === n - 1) p = -1;
+        return { a, len: (PULL[p] ?? 1) + 0.05 * (noise(k, frame) - 0.5), lean: (noise(k + 40, frame) - 0.5) * 0.06 };
       });
       let d = '';
       SPARK.forEach(([x, y], i) => {
