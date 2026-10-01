@@ -505,29 +505,28 @@
       return smoothPath(pts);
     };
 
-    // Each ray twitches on its own: a few times a second, at its own pace,
-    // it snaps to a new length and a slight lean, the way the spark moves in
-    // the Claude apps. The spark as a whole turns smoothly.
+    // Like a loader: the rays reach out one after another, clockwise round
+    // the spark, each stretching a little and easing back as the next goes.
+    // The spark as a whole turns smoothly.
     const RAYS = SPARK.map(([x, y]) => [Math.hypot(x - 12, y - 12), Math.atan2(y - 12, x - 12)])
       .filter(([r], i, all) => r > 10 && r >= all[(i + all.length - 1) % all.length][0] && r >= all[(i + 1) % all.length][0])
-      .map(([, a], k) => ({ a, rate: 4 + ((k * 5) % 7) * 0.8, phase: k * 0.37 }));
-    const noise = (k, n) => { const v = Math.sin(k * 127.1 + n * 311.7) * 43758.5453; return v - Math.floor(v); };
+      .map(([, a]) => a).sort((p, q) => p - q);
     const spark = (sh, t) => {
-      const breathe = 0.97 + 0.02 * Math.sin(t * 2.2 + sh.seed);
-      const pose = RAYS.map((ray, k) => {
-        const n = Math.floor(t * ray.rate + ray.phase + sh.seed);
-        return { a: ray.a, len: 0.86 + 0.26 * noise(k, n), lean: (noise(k + 50, n) - 0.5) * 0.12 };
+      const beat = t * 10 + sh.seed * 7; // rays per second
+      const reach = RAYS.map((a, k) => {
+        const p = (((beat - k) % RAYS.length) + RAYS.length) % RAYS.length; // time since this ray's turn
+        return { a, len: 1 + 0.14 * (p < 0.4 ? p / 0.4 : Math.exp(-(p - 0.4) / 1.2)) };
       });
       let d = '';
       for (const [x, y] of SPARK) {
-        const dx = x - 12, dy = y - 12, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
-        let w = 0, len = 0, lean = 0;
-        for (const p of pose) {
-          const gap = Math.atan2(Math.sin(a - p.a), Math.cos(a - p.a)), wt = Math.exp(-((gap / 0.12) ** 2));
-          w += wt; len += wt * p.len; lean += wt * p.lean;
+        const dx = x - 12, dy = y - 12, a = Math.atan2(dy, dx);
+        let w = 0, len = 0;
+        for (const ray of reach) {
+          const gap = Math.atan2(Math.sin(a - ray.a), Math.cos(a - ray.a)), wt = Math.exp(-((gap / 0.12) ** 2));
+          w += wt; len += wt * ray.len;
         }
-        const f = breathe * (w ? len / w : 1), turn = a + (w ? lean / w : 0) * Math.min(1, r / 6);
-        d += `${d ? 'L' : 'M'}${(12 + Math.cos(turn) * r * f).toFixed(2)},${(12 + Math.sin(turn) * r * f).toFixed(2)}`;
+        const f = w ? len / w : 1;
+        d += `${d ? 'L' : 'M'}${(12 + dx * f).toFixed(2)},${(12 + dy * f).toFixed(2)}`;
       }
       return `${d}Z`;
     };
