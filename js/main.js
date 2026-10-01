@@ -505,25 +505,30 @@
       return smoothPath(pts);
     };
 
-    // Like a loader, but staccato: one ray at a time jerks in short, and
-    // snaps straight back out as the next ray clockwise takes its turn, a
-    // new one every 83ms. Each pull is drawn a little differently (how far
-    // the ray goes in, which way it bends, how much it fattens), as if by
-    // hand. The spark as a whole turns smoothly.
+    // Like a loader, drawn like a cartoon: every 83ms the next ray clockwise
+    // squashes in short and fat, then pops out long and thin past its rest
+    // length, then settles, so a squash-and-stretch ripple runs round the
+    // spark in held frames. The spark as a whole turns smoothly.
     const RAYS = SPARK.map(([x, y]) => [Math.hypot(x - 12, y - 12), Math.atan2(y - 12, x - 12)])
       .filter(([r], i, all) => r > 10 && r >= all[(i + all.length - 1) % all.length][0] && r >= all[(i + 1) % all.length][0])
       .map(([, a]) => a).sort((p, q) => p - q);
-    const noise = (k, n) => { const v = Math.sin(k * 127.1 + n * 311.7) * 43758.5453; return v - Math.floor(v); };
+    const BEATS = [ // a ray's drawings, one per frame from its turn: length, fatness, curl
+      [0.74, 1.45, 0.08],
+      [1.14, 0.8, -0.06],
+      [0.96, 1.08, 0.02],
+    ];
     const spark = (sh, time) => {
       const frame = Math.floor(time / 0.083 + sh.seed * 5), n = RAYS.length;
-      const k = frame % n, lap = Math.floor(frame / n), ray = RAYS[k];
-      const depth = 0.77 + 0.07 * noise(k, lap), bend = (noise(k + 20, lap) - 0.5) * 0.09, fat = 1.1 + 0.15 * noise(k + 40, lap);
+      const moving = BEATS.map(([len, fat, curl], p) => ({ a: RAYS[(((frame - p) % n) + n) % n], len, fat, curl }));
       let d = '';
       for (const [x, y] of SPARK) {
         const dx = x - 12, dy = y - 12, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
-        const gap = Math.atan2(Math.sin(a - ray), Math.cos(a - ray)), wt = Math.exp(-((gap / 0.12) ** 2));
-        const rr = r * (1 - wt * (1 - depth));
-        const aa = a + wt * ((fat - 1) * gap + bend * (r / 12) ** 2);
+        let rr = r, aa = a;
+        for (const ray of moving) {
+          const gap = Math.atan2(Math.sin(a - ray.a), Math.cos(a - ray.a)), wt = Math.exp(-((gap / 0.2) ** 4)); // the whole ray, not just its spine
+          rr += r * wt * (ray.len - 1);
+          aa += wt * ((ray.fat - 1) * gap + ray.curl * (r / 12) ** 2);
+        }
         d += `${d ? 'L' : 'M'}${(12 + Math.cos(aa) * rr).toFixed(2)},${(12 + Math.sin(aa) * rr).toFixed(2)}`;
       }
       return `${d}Z`;
