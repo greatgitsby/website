@@ -505,7 +505,7 @@
       return smoothPath(pts);
     };
 
-    // Like a loader, but staccato: every 100ms the next ray clockwise jerks
+    // Like a loader, but staccato: every 83ms the next ray clockwise jerks
     // in short, its neighbours flinch with it, and it snaps back out over a
     // couple of frames. No easing between frames, and each frame redrawn a
     // little differently, like hand-drawn animation. The spark as a whole
@@ -513,10 +513,10 @@
     const RAYS = SPARK.map(([x, y]) => [Math.hypot(x - 12, y - 12), Math.atan2(y - 12, x - 12)])
       .filter(([r], i, all) => r > 10 && r >= all[(i + all.length - 1) % all.length][0] && r >= all[(i + 1) % all.length][0])
       .map(([, a]) => a).sort((p, q) => p - q);
-    const PULL = { '-1': 0.86, 0: 0.56, 1: 0.68, 2: 0.86 }; // frames since a ray's turn → its length
+    const PULL = { '-1': 0.9, 0: 0.66, 1: 0.76, 2: 0.9 }; // frames since a ray's turn → its length
     const noise = (k, n) => { const v = Math.sin(k * 127.1 + n * 311.7) * 43758.5453; return v - Math.floor(v); };
     const spark = (sh, time) => {
-      const frame = Math.floor(time / 0.1 + sh.seed * 5), n = RAYS.length;
+      const frame = Math.floor(time / 0.083 + sh.seed * 5), n = RAYS.length;
       const reach = RAYS.map((a, k) => {
         let p = (((frame - k) % n) + n) % n;
         if (p === n - 1) p = -1;
