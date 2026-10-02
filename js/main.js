@@ -443,6 +443,7 @@
           add(setStyle(el('circle', { r: R }), { fill: spec.color }));
           break;
         case 'half': // a dome; rotate 180 for a bowl hanging from the top
+          if (!reduceMotion) { live = add(setStyle(el('path', {}), { fill: spec.color })); break; } // it wobbles too
           add(setStyle(el('path', { d: `M${-R},0A${R},${R} 0 0 1 ${R},0Z` }), { fill: spec.color }));
           break;
         case 'claude':
@@ -510,19 +511,23 @@
       for (const sh of shapes) if (sh.shown && sh.fresh) { render(sh, t); sh.fresh = false; }
     }
 
-    // Soft organic outline for pebbles and kidneys, in local coordinates.
+    // Soft organic outline for pebbles, kidneys and the dome, in local
+    // coordinates. The dome wobbles round its curve; its flat side stays flat.
     const WAVES = [[2, 0.055, 0.34], [3, 0.035, -0.26], [4, 0.015, 0.18]];
     const organic = (sh, t) => {
-      const stretch = sh.spec.kind === 'kidney' ? 1.45 : 1;
+      const kind = sh.spec.kind, half = kind === 'half';
+      const stretch = kind === 'kidney' ? 1.45 : 1;
+      const dentAt = sh.dentAt - ((sh.spec.rot || 0) * Math.PI) / 180; // the poke, turned into local coordinates
       const pts = [];
       for (let i = 0; i < 32; i++) {
-        const a = (i / 32) * Math.PI * 2;
+        const a = half ? Math.PI * (1 + i / 24) : (i / 32) * Math.PI * 2;
+        if (half && i > 24) { pts.push([sh.R * (1 - ((i - 24) / 8) * 2), 0]); continue; } // back along the flat side
         let r = 1;
         WAVES.forEach(([k, amp, speed], j) => { r += amp * Math.sin(k * a + sh.seed * (j + 1) + speed * t); });
-        if (sh.spec.kind === 'kidney') r -= 0.12 * Math.max(0, Math.cos(a - Math.PI / 2)) ** 3; // the kidney's pinch
-        const facing = Math.max(0, Math.cos(a - sh.dentAt));
+        if (kind === 'kidney') r -= 0.12 * Math.max(0, Math.cos(a - Math.PI / 2)) ** 3; // the kidney's pinch
+        const facing = Math.max(0, Math.cos(a - dentAt));
         r -= sh.dent * facing * facing * 0.2; // pushed in where the pointer pokes
-        pts.push([Math.cos(a) * sh.R * r * stretch, Math.sin(a) * sh.R * r]);
+        pts.push([Math.cos(a) * sh.R * r * stretch, half ? Math.min(0, Math.sin(a) * sh.R * r) : Math.sin(a) * sh.R * r]);
       }
       return smoothPath(pts);
     };
