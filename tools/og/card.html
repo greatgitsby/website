@@ -60,7 +60,6 @@
       { kind: 'pebble', x: 1070, y: 500, r: 125, c: 0 },
       { kind: 'ring', x: 1165, y: 20, r: 150 },
     ];
-    const GROUND = 90;
     const WAVES = [[2, 0.055], [3, 0.035], [4, 0.015]];
 
     function shapeSVG(spec, color, seed) {
@@ -94,12 +93,7 @@
       const flip = mirror && (spec.kind === 'claude' || spec.kind === 'codex') ? ' scale(-1 1)' : '';
       return `<g transform="translate(${spec.x} ${spec.y}) rotate(${angle.toFixed(2)})${flip}">${shapeSVG(spec, fill(spec.c ?? 0), seed)}</g>`;
     }).join('');
-    // A bright ground along the bottom, which the sun and the big pebble set
-    // behind. iMessage tints its caption bar from the image, so this is what
-    // makes the bar under the preview pop rather than come out near-black.
-    const ground = `<rect y="${630 - GROUND}" width="1200" height="${GROUND}" fill="${fill(1)}"/>`;
-    const art = (mirror ? `<g transform="translate(1200 0) scale(-1 1)">${shapes}</g>` : shapes) + ground;
-    document.getElementById('shapes').innerHTML = art;
+    document.getElementById('shapes').innerHTML = mirror ? `<g transform="translate(1200 0) scale(-1 1)">${shapes}</g>` : shapes;
     document.title = 'ready';
   </script>
 </body>
