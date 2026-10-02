@@ -285,6 +285,19 @@ p { margin: 0; }
 
 .hero__name .split__char { transform-origin: 0 100%; }
 
+/* Once the entrance is done, the letters can be poked and dragged (main.js),
+   so they're no longer clipped. */
+.hero__name.is-jelly .split__clip {
+  clip-path: none;
+  transform-origin: 50% 70%;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.hero__name.is-jelly .split__clip:active { cursor: grabbing; }
+
 .hero__aside {
   grid-area: aside;
   align-self: end;
