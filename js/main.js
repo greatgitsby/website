@@ -361,8 +361,8 @@
   chrome();
 
   // ------------------------------------------------------- mid-century shapes
-  // Simple mid-century forms fill the space above the name: suns, a half-moon
-  // bowl, a ring, soft pebbles and a kidney that wobble like liquid, and the
+  // Simple mid-century forms fill the space above the name: suns, a ring,
+  // soft pebbles, a bubble and a kidney that wobble like liquid, and the
   // Claude and Codex marks. Each floats gently, leans away from
   // the pointer, boings when clicked or tapped, and can be dragged; let go
   // and it springs home. Shapes near the edges run partly off-screen.
@@ -377,7 +377,7 @@
       wide: [
         { kind: 'sun', fx: 0.02, fy: 0.5, r: 0.4, color: C.t },
         { kind: 'kidney', fx: 0.24, fy: 0.5, r: 0.24, color: C.s, rot: 12 },
-        { kind: 'half', fx: 0.5, fy: -0.1, r: 0.46, color: C.m, rot: 180 },
+        { kind: 'pebble', fx: 0.5, fy: 0.34, r: 0.24, color: C.m },
         { kind: 'pebble', fx: 0.63, fy: 0.64, r: 0.15, color: C.g },
         { kind: 'claude', fx: 0.74, fy: 0.3, r: 0.2, color: C.t },
         { kind: 'pebble', fx: 0.86, fy: 0.6, r: 0.24, color: C.s },
@@ -386,8 +386,8 @@
       ],
       narrow: [
         { kind: 'sun', fx: 0.02, fy: 0.55, r: 0.36, color: C.t },
-        { kind: 'half', fx: 0.82, fy: -0.1, r: 0.4, color: C.m, rot: 180 },
-        { kind: 'pebble', fx: 0.55, fy: 0.45, r: 0.16, color: C.g },
+        { kind: 'pebble', fx: 0.78, fy: 0.25, r: 0.18, color: C.m },
+        { kind: 'pebble', fx: 0.5, fy: 0.5, r: 0.16, color: C.g },
         { kind: 'claude', fx: 0.9, fy: 0.74, r: 0.14, color: C.t },
         { kind: 'codex', fx: 0.5, fy: 0.82, r: 0.12, color: C.k },
       ],
@@ -442,10 +442,6 @@
         case 'sun':
           add(setStyle(el('circle', { r: R }), { fill: spec.color }));
           break;
-        case 'half': // a dome; rotate 180 for a bowl hanging from the top
-          if (!reduceMotion) { live = add(setStyle(el('path', {}), { fill: spec.color })); break; } // it wobbles too
-          add(setStyle(el('path', { d: `M${-R},0A${R},${R} 0 0 1 ${R},0Z` }), { fill: spec.color }));
-          break;
         case 'claude':
         case 'codex': {
           const logo = add(setStyle(el('path', { d: LOGO[spec.kind], transform: `scale(${(R / 12).toFixed(3)}) translate(-12 -12)` }),
@@ -499,10 +495,8 @@
           sh.fresh = true;
         }
         sh.hx = spec.fx * W;
-        // Keep the bottom (with room to wobble) above the name; an upright
-        // dome sits on its flat side, so only its top extends upward.
-        const below = spec.kind === 'half' && !spec.rot ? 0.04 : 1.12;
-        sh.hy = Math.min(spec.fy * H, H - sh.R * below);
+        // Keep the bottom (with room to wobble) above the name.
+        sh.hy = Math.min(spec.fy * H, H - sh.R * 1.12);
         if (Number.isNaN(sh.px)) { sh.px = sh.hx; sh.py = sh.hy; }
       });
       // Draw rebuilt shapes now, in the same frame, rather than waiting for
@@ -511,23 +505,21 @@
       for (const sh of shapes) if (sh.shown && sh.fresh) { render(sh, t); sh.fresh = false; }
     }
 
-    // Soft organic outline for pebbles, kidneys and the dome, in local
-    // coordinates. The dome wobbles round its curve; its flat side stays flat.
+    // Soft organic outline for pebbles and kidneys, in local coordinates.
     const WAVES = [[2, 0.055, 0.34], [3, 0.035, -0.26], [4, 0.015, 0.18]];
     const organic = (sh, t) => {
-      const kind = sh.spec.kind, half = kind === 'half';
+      const kind = sh.spec.kind;
       const stretch = kind === 'kidney' ? 1.45 : 1;
       const dentAt = sh.dentAt - ((sh.spec.rot || 0) * Math.PI) / 180; // the poke, turned into local coordinates
       const pts = [];
       for (let i = 0; i < 32; i++) {
-        const a = half ? Math.PI * (1 + i / 24) : (i / 32) * Math.PI * 2;
-        if (half && i > 24) { pts.push([sh.R * (1 - ((i - 24) / 8) * 2), 0]); continue; } // back along the flat side
+        const a = (i / 32) * Math.PI * 2;
         let r = 1;
         WAVES.forEach(([k, amp, speed], j) => { r += amp * Math.sin(k * a + sh.seed * (j + 1) + speed * t); });
         if (kind === 'kidney') r -= 0.12 * Math.max(0, Math.cos(a - Math.PI / 2)) ** 3; // the kidney's pinch
         const facing = Math.max(0, Math.cos(a - dentAt));
         r -= sh.dent * facing * facing * 0.2; // pushed in where the pointer pokes
-        pts.push([Math.cos(a) * sh.R * r * stretch, half ? Math.min(0, Math.sin(a) * sh.R * r) : Math.sin(a) * sh.R * r]);
+        pts.push([Math.cos(a) * sh.R * r * stretch, Math.sin(a) * sh.R * r]);
       }
       return smoothPath(pts);
     };
@@ -567,9 +559,8 @@
 
     function render(sh, t) {
       const spec = sh.spec;
-      // Gentle sway, except for shapes with a flat edge, which stay level.
-      const sway = spec.kind === 'half' ? 0 : 4;
-      let angle = (spec.rot || 0) + Math.sin(t * 0.4 + sh.seed) * sway;
+      // Gentle sway.
+      let angle = (spec.rot || 0) + Math.sin(t * 0.4 + sh.seed) * 4;
       if (sh.live && spec.kind === 'claude') {
         const frame = Math.floor(t * FPS);
         if (frame !== sh.frame) sh.live.setAttribute('d', spark(sh, sh.frame = frame));
