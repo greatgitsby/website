@@ -279,6 +279,105 @@
         state[i].cy = r.top + r.height / 2;
       }
     });
+
+    // ------------------------------------------------------- jelly letters
+    // Like the shapes above: each letter boings when pressed, can be dragged
+    // (tugging its neighbours along), and wobbles home when let go. A mouse
+    // brushing past knocks it about a little. Moves the clip around the
+    // letter, so it never fights the letter's own entrance transition.
+    const boxes = chars.map((c) => c.parentElement);
+    const jelly = boxes.map(() => ({ x: 0, y: 0, vx: 0, vy: 0, r: 0, vr: 0, s: 1, vs: 0, grab: null, still: true }));
+    const lineOf = new Int8Array(chars.length);
+    lines.forEach((line, n) => { for (const i of line.idx) lineOf[i] = n; });
+    let live = false;
+    // Free the letters once the entrance has finished.
+    fontsReady.then(() => setTimeout(() => { live = true; nameEl.classList.add('is-jelly'); }, 350 + chars.length * 70 + 1300));
+
+    const jellyStep = () => {
+      for (let i = 0; i < chars.length; i++) {
+        const j = jelly[i];
+        let tx = 0, ty = 0;
+        if (j.grab) {
+          tx = j.grab.x - j.grab.sx + j.grab.ox;
+          ty = j.grab.y - j.grab.sy + j.grab.oy;
+        } else {
+          // Pulled along by a grabbed neighbour on the same line, less the
+          // further away it is.
+          for (let g = 0; g < chars.length; g++) {
+            if (!jelly[g].grab || lineOf[g] !== lineOf[i]) continue;
+            const f = Math.pow(0.32, Math.abs(g - i));
+            tx += jelly[g].x * f;
+            ty += jelly[g].y * f;
+          }
+        }
+        const k = j.grab ? 0.35 : 0.09, damping = j.grab ? 0.6 : 0.84;
+        j.vx = (j.vx + (tx - j.x) * k) * damping;
+        j.vy = (j.vy + (ty - j.y) * k) * damping;
+        j.x += j.vx;
+        j.y += j.vy;
+        // Leans into its motion like a jelly, and toward where it's pulled.
+        const tr = clamp(j.vx * 1.4 + j.x * 0.04, -28, 28);
+        j.vr = (j.vr + (tr - j.r) * 0.2) * 0.78;
+        j.r += j.vr;
+        j.vs = (j.vs + (1 - j.s) * 0.18) * 0.82; // boing
+        j.s += j.vs;
+      }
+    };
+
+    const jellyRender = () => {
+      for (let i = 0; i < chars.length; i++) {
+        const j = jelly[i];
+        const still = !j.grab && Math.abs(j.x) + Math.abs(j.y) + Math.abs(j.vx) + Math.abs(j.vy) + Math.abs(j.r) < 0.05 &&
+          Math.abs(j.s - 1) + Math.abs(j.vs) < 0.001;
+        if (still && j.still) continue;
+        j.still = still;
+        // Squash and stretch with vertical speed.
+        const sq = clamp(j.vy * 0.006, -0.12, 0.12);
+        boxes[i].style.transform = still ? '' : `translate(${j.x.toFixed(1)}px, ${j.y.toFixed(1)}px) ` +
+          `rotate(${j.r.toFixed(2)}deg) scale(${(j.s * (1 - sq)).toFixed(3)}, ${(j.s * (1 + sq)).toFixed(3)})`;
+      }
+    };
+
+    let jellyAcc = 0, jellyPrev = performance.now();
+    tickers.push((now) => {
+      jellyAcc = Math.min(jellyAcc + (now - jellyPrev), 100);
+      jellyPrev = now;
+      if (!live || !heroVisible) return;
+      while (jellyAcc >= 16.667) { jellyStep(); jellyAcc -= 16.667; }
+      jellyRender();
+    });
+
+    const letterAt = (target) => boxes.indexOf(target.closest('.split__clip'));
+    nameEl.addEventListener('pointerdown', (e) => {
+      const i = letterAt(e.target);
+      if (!live || i < 0) return;
+      e.preventDefault();
+      const j = jelly[i];
+      j.vs += 0.12;
+      j.grab = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, ox: j.x, oy: j.y };
+      try { boxes[i].setPointerCapture(e.pointerId); } catch { /* drag without capture */ }
+    });
+    // Keep a touch on a letter for the letter, rather than a page pan.
+    nameEl.addEventListener('touchstart', (e) => {
+      if (live && letterAt(e.target) >= 0) e.preventDefault();
+    }, { passive: false });
+    window.addEventListener('pointermove', (e) => {
+      for (const j of jelly) if (j.grab && j.grab.id === e.pointerId) { j.grab.x = e.clientX; j.grab.y = e.clientY; }
+    }, { passive: true });
+    const letGo = (e) => {
+      for (const j of jelly) if (j.grab && j.grab.id === e.pointerId) { j.grab = null; j.vs += 0.06; }
+    };
+    window.addEventListener('pointerup', letGo);
+    window.addEventListener('pointercancel', letGo);
+    // A mouse brushing over a letter knocks it the way it was going.
+    nameEl.addEventListener('pointerover', (e) => {
+      const i = letterAt(e.target);
+      if (!live || i < 0 || e.pointerType !== 'mouse' || e.buttons) return;
+      const j = jelly[i];
+      j.vx += clamp(e.movementX, -30, 30) * 0.35;
+      j.vy += clamp(e.movementY, -30, 30) * 0.35;
+      j.vs += 0.03;
+    });
   }
 
   // --------------------------------------------------------- portrait blob
